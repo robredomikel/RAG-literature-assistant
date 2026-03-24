@@ -87,6 +87,10 @@ def create_openai_client() -> OpenAI:
 
 
 def load_vectorstore(index_dir: Path, embedding_model: str) -> FAISS:
+    """
+    Load the FAISS vector store from the specified directory. Considers as embedding model the one used during indexing to ensure compatibility. 
+    If the index directory does not exist, raises a FileNotFoundError with instructions to run the indexer script first.
+    """
     if not index_dir.exists():
         raise FileNotFoundError(
             f"FAISS index directory does not exist: {index_dir}. "
@@ -142,6 +146,14 @@ def extract_final_answer(messages: list[dict]) -> str:
 
 
 def build_agents(model: str, search_literature):
+    """
+    Build the router agent and its specialist agents for methods analysis, results extraction, skeptical review, 
+    and general synthesis. Each specialist is designed to handle a specific aspect of scientific literature questions, 
+    and the router's sole responsibility is to delegate questions to the appropriate specialist based on the question's focus. 
+    All agents rely on the search_literature tool to ground their answers in the retrieved evidence, and they are instructed 
+    to cite sources explicitly while avoiding unsupported claims.
+    """
+    
     methods_agent = Agent(
         name="Methods Analyst",
         model=model,
@@ -250,6 +262,10 @@ def build_agents(model: str, search_literature):
 
 
 def ask_question(client: Swarm, router_agent: Agent, question: str) -> None:
+    """
+    Send a question to the router agent and print the response from the chosen agent.
+    """
+    
     response = client.run(
         agent=router_agent,
         messages=[{"role": "user", "content": question}],
